@@ -185,14 +185,14 @@ reload_config_colors() {
     cp "$hyprConf/theme" "$hyprConf/theme.conf"
 
     if [ -d "$rofi" ]; then
-        cp "$rofi/theme" "$rofi/theme.rofi"
+        cp "$rofi/theme" "$rofi/theme.rasi"
     fi
 
     while IFS=', ' read -r -a color; do
         val=$(grep -E "$color" "$style" | grep -Eo "#[0-9A-Z]+" | sed "s/\#//")
         sed "s/{{$color}}/$val/g" "$hyprConf/theme.conf" > "$temp" && mv "$temp" "$hyprConf/theme.conf"
 
-        sed "s/{{$color}}/\#$val/g" "$rofi/theme.rofi" > "$temp" && mv "$temp" "$rofi/theme.rofi"
+        sed "s/{{$color}}/\#$val/g" "$rofi/theme.rasi" > "$temp" && mv "$temp" "$rofi/theme.rasi"
     done <<< "$colors"
 
     if [ "$(jq -r '.live' "$themex/config.json")" = "true" ]; then

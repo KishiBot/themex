@@ -26,6 +26,9 @@ Themex allows for theme wide colors. These are defined in `style.css` file insid
 Hyprland doesn't support css styling, but you can still use these. For that you need `theme` file to be present in hyprland directory. In this file you can write hyprland config as if it was .conf file, but instead of hardcoded colors you can use {{background}}. For example: `col.inactive_border = rgb({{background}})`.<br>
 When switching to a theme or by using `themex -h` this file will be copied into `theme.conf` file that you can include in your main hyprland.conf like this: `source = $HOME/.config/hypr/theme.conf`. All color templates will be replaced with colors from your style.css.
 
+### Wallpaper
+To update a wallpaper switch the `wallpaper` file in `.themex` folder for your desired image or video. Edit the `live` parameter in config.file if needed and update the theme with `themex -u` or create a new one with `themex -c [name]`.
+
 ### Shaders
 You can set up custom glsl shaders for certain transitions like `transition_shader` for workspace transitions and `switch_shader` for theme switch transitions. Shaders are located inside `$HOME/.config/hypr/shaders/` folder. For `transition_shader` to work you need to put `bind = $mainMod, [key], exec, themex_workspace_transition [workspace]` for each desired workspace in hyprland config file. themex_workspace_transition will be installed by running `install` script together with `themex`.<br>
 In config.json you can specify duration of each shader in `length` parameter, which takes in time in seconds.

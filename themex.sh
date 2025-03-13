@@ -7,6 +7,8 @@ waybarConf="$HOME/.config/waybar"
 hyprConf="$HOME/.config/hypr"
 kittyConf="$HOME/.config/kitty"
 rofi="$HOME/.config/rofi"
+shaders="$HOME/.config/hypr/shaders"
+config="$HOME/.themex/config.json"
 
 BLACK="\e[0;30m"
 RED="\e[0;31m"
@@ -22,25 +24,25 @@ RESET="\e[0m"
 useRofi=false
 
 
-for arg in "$@"; do
-    if [ "$arg" = "--help" ]; then
-        echo "Usage: themex [OPTION]"
-        echo ""
-        echo "Options:"
-        echo "  -c [name]    Create new theme with given name"
-        echo "  -u           Updates theme with current theme"
-        echo "               Uses name in config.json"
-        echo "               Creates backup theme \"temp\" from old theme version"
-        echo "  -s           Switch theme (uses fzf)"
-        echo "               Creates backup theme \"temp\" from current theme"
-        echo "  -h           Reloads hyprland config with colors from style.css"
-        echo "               Use $hyprConf/theme for theme config"
-        echo "               Use \"{{color_name}}\" in theme config"
-        echo "  -r           Use rofi instead of fzf"
-        echo "               Needs to be used before -s flag"
-        exit
-    fi
-done
+help() {
+    echo "Usage: themex [OPTION]"
+    echo ""
+    echo "Options:"
+    echo "  -c [name]       Create new theme with given name"
+    echo "  -u              Updates theme with current theme"
+    echo "                  Uses name in config.json"
+    echo "                  Creates backup theme \"temp\" from old theme version"
+    echo "  -s              Switch theme (uses fzf)"
+    echo "                  Creates backup theme \"temp\" from current theme"
+    echo "  -h              Reloads hyprland config with colors from style.css"
+    echo "                  Use $hyprConf/theme for theme config"
+    echo "                  Use \"{{color_name}}\" in theme config"
+    echo "  -r              Use rofi instead of fzf"
+    echo "                  Needs to be used before -s flag"
+    echo "  -t [workspace]  Call a transition script"
+    echo "  --boot          Starts a boot sequence"
+    exit
+}
 
 create_theme() {
     doPrint=true
@@ -68,12 +70,14 @@ create_theme() {
 
     mkdir "$new_dir/waybar"
     mkdir "$new_dir/hypr"
+    mkdir "$new_dir/hypr/shaders"
     mkdir "$new_dir/kitty"
     mkdir "$new_dir/rofi"
 
     cp -r "$waybarConf/config.jsonc" "$new_dir/waybar/"
     cp -r "$waybarConf/style.css" "$new_dir/waybar/"
     cp "$hyprConf/theme" "$new_dir/hypr/"
+    cp -r "$shaders" "$new_dir/hypr/"
     cp "$kittyConf/kitty.conf" "$new_dir/kitty/"
 
     jq ".name = \"$1\"" "$themex/config.json" > tmp.json && mv tmp.json "$themex/config.json"
@@ -146,9 +150,12 @@ switch_theme() {
     fi
     create_theme "temp" false
 
+    rm -rf "$shaders"
+
     cp -r "$dir/$theme/waybar/config.jsonc" "$waybarConf/"
     cp -r "$dir/$theme/waybar/style.css" "$waybarConf/"
     cp "$dir/$theme/hypr/theme" "$hyprConf/"
+    cp -r "$dir/$theme/hypr/shaders" "$hyprConf/"
     cp "$dir/$theme/kitty/kitty.conf" "$kittyConf/"
 
     if [ -d "$rofi" ]; then
@@ -159,16 +166,26 @@ switch_theme() {
     cp "$dir/$theme/wallpaper" "$themex/"
     cp "$dir/$theme/style.css" "$themex/"
 
-    reload_config_colors
 
-    if [ "$(jq -r '.live' "$themex/config.json")" = "true" ]; then
-        killall mpvpaper
-    else
-        killall swaybg
-    fi
+    #Transition shader
+    hyprctl keyword debug:damage_tracking 0
+    hyprshade on "$shaders/$(jq -r '.switch_shader.disabled.name' $config)"
+    sleep $(jq -r '.switch_shader.disabled.length' $config)
+
+    wlsunset -g 0 &
+    reload_config_colors
 
     hyprctl reload
     pkill -USR2 waybar
+    sleep $(jq -r '.switch_shader.enabled.length' $config)
+
+    # Transition shader
+    hyprctl keyword debug:damage_tracking 0
+    hyprshade on "$shaders/$(jq -r '.switch_shader.enabled.name' $config)"
+    killall wlsunset
+    sleep $(jq -r '.switch_shader.enabled.length' $config)
+    hyprshade off
+    hyprctl keyword debug:damage_tracking 1
 }
 
 reload_config_colors() {
@@ -202,24 +219,52 @@ reload_config_colors() {
     fi
 }
 
-while getopts "c:surh" opt; do
-    case $opt in
-        c) 
+boot() {
+    wlsunset -g 0 &
+    sleep 3
+    hyprctl keyword debug:damage_tracking 0
+    hyprshade on "$shaders/themeswitch2.glsl"
+    killall wlsunset
+    sleep 0.6
+    hyprshade off
+    hyprctl keyword debug:damage_tracking 1
+}
+
+for arg in "$@"; do
+    case $arg in
+        --help)
+            help
+            exit 0
+            ;;
+        -c) 
             create_theme $OPTARG
+            exit 0
             ;;
-        u)
+        -u)
             update_theme
+            exit 0
             ;;
-        s)
+        -s)
             switch_theme
+            exit 0
             ;;
-        h)
+        -h)
             reload_config_colors
+            exit 0
             ;;
-        r)
+        -r)
             useRofi=true
+            ;;
+        -t)
+            themex_workspace_transition $1
+            exit 0
+            ;;
+        --boot)
+            boot
+            exit 0
             ;;
         *)
             echo "Invalide argument: $OPT"
+            exit 0
     esac
 done

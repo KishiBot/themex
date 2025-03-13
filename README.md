@@ -1,12 +1,33 @@
 # Themex
 
-### Description
-Themex is really dumb linux theme manager. It is very specifically setup to work tightly with my personal setup which probably makes it unusable for anyone else. It basically works only with hyprland and its default directory structure.
+## Description
+Themex is a really dumb linux theme manager. It is very specifically setup to work tightly with my personal setup which probably makes it unusable for anyone else. It works only with hyprland.
 
-### Usage
-To use this you need very specific structure. Use `$HOME/.config/hypr/theme` file as config file for hyprland. This should contain all specifics for the current theme. You can hardcode colors here but prefered way is to use templates like `{{color1}}`. These templates will get replaced by colors specified in `style.css` file. Your main hyprland.conf file should then import theme.conf which will be generated from aforementioned `theme` file.<br>
-For waybar use `$HOME/.config/waybar/config.jsonc` and `$HOME/.config/waybar/style.css` files. Both of these will be part of current theme and will be swapped with themes. Note that waybar's style.css is different from the main style.css file and to use the same colors as used within hyprland config (which are specified in the main style.css) you should include the main style.css in waybar's style.css and use its colors.<br>
-Kitty has its `$HOME/.config/kitty/kitty.conf` file backped up with current theme and swapped as well.<br>
-For rofi you can setup colors and specific themes in the same way as hyprland. Use `$HOME/.config/rofi/theme` file for your style. From this a `theme.rasi` file will be generated in rofi's config directory and you should import this in the `config.rasi` file. If rofi's config directory is not present, it will be ignored by themex.<br>
-Wallpaper can be either static image or a video. For static image `swaybg` is used and for video `mpvpaper` is used. In `$HOME/.themex/config.json` a parameter of whether a video or static image is in use should be specified. `$HOME/.themex/wallpaper` file will be used for wallpaper. In `$HOME/.config/hypr/theme` you have to startup wallpaper with aforementoned wallpaper file.<br>
-`$HOME/.themex/style.css` is main style.css file. In here all colors used throughout the theme should be specified.<br>
+## Requirements
+Hyprland
+Hyprshade
+wlsunset
+rofi or fzf
+mpvpaper
+swaybg
+
+## Usage
+To create a theme you can use an existing one as template, edit it and then create new theme with `themex -c [name]`.
+
+### config.json
+All configuration is inside `config.json` file located in `.themex` folder. config.json is unique for each theme.<br>
+`live` sets whether current theme uses still picture or a video for background.`<br>
+name` sets the name of the config.`<br>
+transition_shader` sets parameters of the shader that is used when transitioning between workspaces (for information on how to set it up refer to Shaders section). `name` is the filename of the transition shader used to locate the file. `enabled` sets whether transition_shader is enabled or not.<br>
+`switch_shader` sets parameters of the shader used when switching between themes. (for more information refer to Shaders section).<br>
+
+### Colors
+Themex allows for theme wide colors. These are defined in `style.css` file inside `$HOME/.themex` folder. Color can be defined as such: `@define-color background #1C0D26;`. To use these colors inside waybar, simply include this file in your waybar's style.css.<br>
+Hyprland doesn't support css styling, but you can still use these. For that you need `theme` file to be present in hyprland directory. In this file you can write hyprland config as if it was .conf file, but instead of hardcoded colors you can use {{background}}. For example: `col.inactive_border = rgb({{background}})`.<br>
+When switching to a theme or by using `themex -h` this file will be copied into `theme.conf` file that you can include in your main hyprland.conf like this: `source = $HOME/.config/hypr/theme.conf`. All color templates will be replaced with colors from your style.css.
+
+### Shaders
+You can set up custom glsl shaders for certain transitions like `transition_shader` for workspace transitions and `switch_shader` for theme switch transitions. Shaders are located inside `$HOME/.config/hypr/shaders/` folder. For `transition_shader` to work you need to put `bind = $mainMod, [key], exec, themex_workspace_transition [workspace]` for each desired workspace in hyprland config file. themex_workspace_transition will be installed by running `install` script together with `themex`.<br>
+In config.json you can specify duration of each shader in `length` parameter, which takes in time in seconds.
+`name` parameter takes in name of the shader such as `transition.glsl` and expects this shader to be located in the proper folder.<br>
+`switch_shader` can have two different shaders depending on whether the theme is being switched out of or switched into.<br>

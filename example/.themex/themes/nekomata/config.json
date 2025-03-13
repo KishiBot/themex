@@ -1,0 +1,14 @@
+{
+  "live": true,
+  "name": "nekomata",
+  "switch_shader": {
+    "disabled": {
+      "length": 0.6,
+      "name": "themeswitch1.glsl"
+    },
+    "enabled": {
+      "length": 0.8,
+      "name": "themeswitch2.glsl"
+    }
+  }
+}

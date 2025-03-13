@@ -1,13 +1,18 @@
 {
   "live": true,
   "name": "nekomata",
+  "transition_shader": {
+    "enabled": true,
+    "length": 0.05,
+    "name": "glitch.glsl"
+  },
   "switch_shader": {
     "disabled": {
       "length": 0.6,
       "name": "themeswitch1.glsl"
     },
     "enabled": {
-      "length": 0.8,
+      "length": 0.6,
       "name": "themeswitch2.glsl"
     }
   }
